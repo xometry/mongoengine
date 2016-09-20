@@ -376,12 +376,12 @@ class Document(BaseDocument):
         select_dict = {field.db_field: field.to_mongo(self.pk)}
         shard_key = self.__class__._meta.get('shard_key', tuple())
         for k in shard_key:
-            # for a lazy instance of a reference field, we can't access any
-            # attributes other than the pk (accessing anything else would cause
-            # a reload, which causes _db_object key to be called, which causes
-            # an infinite recursion loop
+            # For a lazy instance of a reference field, we want to fetch the
+            # entire object so we can properly perform operations that require
+            # the entire shard key (such as findAndModify). The reload method
+            # is aware of lazy objects.
             if self._lazy and k != self._meta['id_field']:
-                continue
+                self.reload()
             actual_key = self._db_field_map.get(k, k)
             select_dict[actual_key] = self._fields[k].to_mongo(getattr(self, k))
         return select_dict
@@ -488,7 +488,13 @@ class Document(BaseDocument):
         """
         id_field = self._meta['id_field']
         collection = self._get_collection()
-        son = collection.find_one(self._db_object_key)
+        # If this is a lazy object, we only have the ID field and don't want to
+        # call _db_object_key, since _db_object_key could fetch (reload) the
+        # object.
+        if self._lazy:
+            son = collection.find_one({ '_id': self.pk })
+        else:
+            son = collection.find_one(self._db_object_key)
         if son == None:
             raise self.DoesNotExist('Document has been deleted.')
         _set(self, '_db_data', son)
