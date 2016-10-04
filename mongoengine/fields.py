@@ -15,6 +15,7 @@ else:
 import pymongo
 import gridfs
 from bson import Binary, DBRef, SON, ObjectId
+import decimal
 
 from mongoengine.errors import ValidationError
 from mongoengine.python_support import (PY3, bin_type, txt_type,
@@ -34,10 +35,10 @@ except ImportError:
     Image = None
     ImageOps = None
 
-__all__ = ['StringField',  'URLField',  'EmailField',  'IntField',
-           'FloatField',  'BooleanField',  'DateTimeField',
+__all__ = ['StringField',  'URLField',  'EmailField',  'IntField', 'LongField'
+           'FloatField',  'DecimalField', 'BooleanField',  'DateTimeField',
            'ComplexDateTimeField',  'EmbeddedDocumentField', 'ObjectIdField',
-           'GenericEmbeddedDocumentField',  'DynamicField',  'ListField',
+           'GenericEmbeddedDocumentField',  'DynamicField',  'ListField', 'EmbeddedDocumentListField'
            'SortedListField',  'DictField',  'MapField',  'ReferenceField',
            'SafeReferenceField', 'SafeReferenceListField',
            'GenericReferenceField',  'BinaryField',  'GridFSError',
@@ -177,6 +178,36 @@ class IntField(BaseField):
             return int(value)
 
 
+class LongField(BaseField):
+    """An integer field.
+    """
+
+    def __init__(self, min_value=None, max_value=None, **kwargs):
+        self.min_value, self.max_value = min_value, max_value
+        super(LongField, self).__init__(**kwargs)
+
+    def from_python(self, value):
+        return self.prepare_query_value(None, value)
+
+    def validate(self, value):
+        try:
+            value = long(value)
+        except:
+            self.error('%s could not be converted to int' % value)
+
+        if self.min_value is not None and value < self.min_value:
+            self.error('Integer value is too small')
+
+        if self.max_value is not None and value > self.max_value:
+            self.error('Integer value is too large')
+
+    def prepare_query_value(self, op, value):
+        if value is None:
+            return value
+        else:
+            return int(value)
+
+
 class FloatField(BaseField):
     """A floating point number field.
     """
@@ -196,6 +227,31 @@ class FloatField(BaseField):
 
         if self.max_value is not None and value > self.max_value:
             self.error('Float value is too large')
+
+class DecimalField(BaseField):
+    """A fixed-point decimal number field.
+    """
+
+    def __init__(self, min_value=None, max_value=None, force_string=False,
+                 precision=2, rounding=decimal.ROUND_HALF_UP, **kwargs):
+        self.min_value, self.max_value = min_value, max_value
+        self.force_string = force_string
+        self.precision = precision
+        self.rounding = rounding
+        super(DecimalField, self).__init__(**kwargs)
+
+    # needs more updating
+    def validate(self, value):
+        if isinstance(value, int):
+            value = float(value)
+        if not isinstance(value, float):
+            self.error('DecimalField only accepts float values')
+
+        if self.min_value is not None and value < self.min_value:
+            self.error('Decimal value is too small')
+
+        if self.max_value is not None and value > self.max_value:
+            self.error('Decimal value is too large')
 
 
 class BooleanField(BaseField):
@@ -596,6 +652,27 @@ class ListField(ComplexBaseField):
             if op in ('set', 'unset'):
                 return value
         return super(ListField, self).prepare_query_value(op, value)
+
+
+class EmbeddedDocumentListField(ListField):
+    """A :class:`~mongoengine.ListField` designed specially to hold a list of
+    embedded documents to provide additional query helpers.
+    .. note::
+        The only valid list values are subclasses of
+        :class:`~mongoengine.EmbeddedDocument`.
+    .. versionadded:: 0.9
+    """
+
+    def __init__(self, document_type, **kwargs):
+        """
+        :param document_type: The type of
+         :class:`~mongoengine.EmbeddedDocument` the list will hold.
+        :param kwargs: Keyword arguments passed directly into the parent
+         :class:`~mongoengine.ListField`.
+        """
+        super(EmbeddedDocumentListField, self).__init__(
+            field=EmbeddedDocumentField(document_type), **kwargs
+        )
 
 
 class SortedListField(ListField):
