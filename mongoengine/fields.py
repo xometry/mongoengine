@@ -38,7 +38,7 @@ except ImportError:
 __all__ = ['StringField',  'URLField',  'EmailField',  'IntField', 'LongField',
            'FloatField',  'DecimalField', 'BooleanField',  'DateTimeField',
            'ComplexDateTimeField',  'EmbeddedDocumentField', 'ObjectIdField',
-           'GenericEmbeddedDocumentField',  'DynamicField',  'ListField', 'EmbeddedDocumentListField'
+           'GenericEmbeddedDocumentField',  'DynamicField',  'ListField', 'EmbeddedDocumentListField',
            'SortedListField',  'DictField',  'MapField',  'ReferenceField',
            'SafeReferenceField', 'SafeReferenceListField',
            'GenericReferenceField',  'BinaryField',  'GridFSError',
