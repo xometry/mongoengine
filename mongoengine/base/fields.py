@@ -35,7 +35,7 @@ class BaseField(object):
     def __init__(self, db_field=None, name=None, required=False, default=None,
                  unique=False, unique_with=None, primary_key=False,
                  validation=None, choices=None, verbose_name=None,
-                 help_text=None):
+                 help_text=None, **kw):
         """
         :param db_field: The database field to store this field in
             (defaults to the name of the field)

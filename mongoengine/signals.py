@@ -35,6 +35,10 @@ except ImportError:
 # not put signals in here.  Create your own namespace instead.
 _signals = Namespace()
 
+class pre_init():
+    @classmethod
+    def connect(*a, **kw):
+        pass
 pre_save = _signals.signal('pre_save')
 post_save = _signals.signal('post_save')
 pre_delete = _signals.signal('pre_delete')

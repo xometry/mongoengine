@@ -43,11 +43,18 @@ __all__ = ['StringField',  'URLField',  'EmailField',  'IntField',
            'GenericReferenceField',  'BinaryField',  'GridFSError',
            'GridFSProxy',  'FileField',  'ImageGridFsProxy',
            'ImproperlyConfigured',  'ImageField',  'GeoPointField', 'PointField',
-           'LineStringField', 'PolygonField', 'SequenceField',  'UUIDField']
+           'LineStringField', 'PolygonField', 'SequenceField',  'UUIDField',
+           'EmbeddedDocumentListField', 'LongField', 'DecimalField']
 
 
 RECURSIVE_REFERENCE_CONSTANT = 'self'
 
+def EmbeddedDocumentListField(*args, **kw):
+    return ListField(EmbeddedDocumentField(*args, **kw))
+def LongField(*args, **kw):
+    return IntField(*args, **kw)
+def DecimalField(*args, **kw):
+    return FloatField(*args, **kw)
 
 class StringField(BaseField):
     """A unicode string field.
