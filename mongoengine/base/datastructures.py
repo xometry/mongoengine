@@ -8,13 +8,13 @@ class WeakInstanceMixin(object):
     _instance_ref = None
 
     def _get_instance(self):
-        return self._instance_ref and self._instance_ref()
+        return self._instance_ref
 
     def _set_instance(self, instance):
         if instance is None:
             self._instance_ref = None
         else:
-            self._instance_ref = weakref.ref(instance)
+            self._instance_ref = instance
 
     _instance = property(_get_instance, _set_instance)
 

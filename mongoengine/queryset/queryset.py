@@ -1317,15 +1317,10 @@ class QuerySet(object):
     @property
     def _cursor_args(self):
         cursor_args = {
-            'snapshot': self._snapshot,
-            'timeout': self._timeout
+            'no_cursor_timeout': self._timeout
         }
-        if self._read_preference is not None:
-            cursor_args['read_preference'] = self._read_preference
-        else:
-            cursor_args['slave_okay'] = self._slave_okay
         if self._loaded_fields:
-            cursor_args['fields'] = self._loaded_fields.as_dict()
+            cursor_args['projection'] = self._loaded_fields.as_dict()
         return cursor_args
 
     @property

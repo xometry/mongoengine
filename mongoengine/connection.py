@@ -19,7 +19,7 @@ _dbs = {}
 
 
 def register_connection(alias, name, host='localhost', port=27017,
-                        is_slave=False, read_preference=False, slaves=None,
+                        is_slave=False, slaves=None,
                         username=None, password=None, **kwargs):
     """Add a connection.
 
@@ -49,7 +49,6 @@ def register_connection(alias, name, host='localhost', port=27017,
         'slaves': slaves or [],
         'username': username,
         'password': password,
-        'read_preference': read_preference
     }
 
     # Handle uri style connections
@@ -63,7 +62,6 @@ def register_connection(alias, name, host='localhost', port=27017,
             'name': uri_dict.get('database'),
             'username': uri_dict.get('username'),
             'password': uri_dict.get('password'),
-            'read_preference': read_preference,
         })
         if "replicaSet" in host:
             conn_settings['replicaSet'] = True
