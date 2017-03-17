@@ -39,6 +39,7 @@ class BaseDocument(object):
         _set(self, '_changed_fields', set())
         if values:
             pk = values.pop('pk', None)
+            # Throw out values that aren't in fields
             for field in set(self._fields.keys()).intersection(values.keys()):
                 setattr(self, field, values[field])
             if pk != None:

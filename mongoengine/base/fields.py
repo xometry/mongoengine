@@ -74,6 +74,7 @@ class BaseField(object):
         self.choices = choices
         self.verbose_name = verbose_name
         self.help_text = help_text
+        self.__dict__.update(kw)
 
         # Adjust the appropriate creation counter, and save our local copy.
         if self.db_field == '_id':

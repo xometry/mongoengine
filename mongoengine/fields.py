@@ -49,8 +49,6 @@ __all__ = ['StringField',  'URLField',  'EmailField',  'IntField',
 
 RECURSIVE_REFERENCE_CONSTANT = 'self'
 
-def EmbeddedDocumentListField(*args, **kw):
-    return ListField(EmbeddedDocumentField(*args, **kw))
 def LongField(*args, **kw):
     return IntField(*args, **kw)
 def DecimalField(*args, **kw):
@@ -435,6 +433,23 @@ class EmbeddedDocumentField(BaseField):
 
     def prepare_query_value(self, op, value):
         return self.to_mongo(value)
+
+    def value_for_instance(self, value, instance):
+        return self.resolve_value(value, self)
+
+    def resolve_value(self, val, field_class):
+        if isinstance(val, dict) and isinstance(field_class, EmbeddedDocumentField):
+            for k, v in val.iteritems():
+                try:
+                    v_type = getattr(field_class.document_type, k)
+                except AttributeError:
+                    pass
+                if isinstance(v_type, EmbeddedDocumentField):
+                    val[k] = self.resolve_value(v, v_type)
+
+            return field_class.document_type(**val)
+        else:
+            return val
 
 
 class GenericEmbeddedDocumentField(BaseField):
@@ -1651,3 +1666,52 @@ class PolygonField(GeoJsonBaseField):
     .. versionadded:: 0.8
     """
     _type = "Polygon"
+class EmbeddedDocumentListField(ListField):
+    """A :class:`~mongoengine.ListField` designed specially to hold a list of
+    embedded documents to provide additional query helpers.
+
+    .. note::
+        The only valid list values are subclasses of
+        :class:`~mongoengine.EmbeddedDocument`.
+
+    .. versionadded:: 0.9
+
+    """
+
+    def __init__(self, document_type, **kwargs):
+        """
+        :param document_type: The type of
+         :class:`~mongoengine.EmbeddedDocument` the list will hold.
+        :param kwargs: Keyword arguments passed directly into the parent
+         :class:`~mongoengine.ListField`.
+        """
+        super(EmbeddedDocumentListField, self).__init__(
+            field=EmbeddedDocumentField(document_type), **kwargs
+        )
+
+    def resolve_value(self, val, field_class):
+        if isinstance(val, dict) and isinstance(field_class, EmbeddedDocumentField):
+            for k, v in val.iteritems():
+                try:
+                    v_type = getattr(field_class.document_type, k)
+                except AttributeError:
+                    # Ignore attribute errors for _ fields i.e. _cls
+                    pass
+                if isinstance(v, type(self)):
+                    val[k] = v.value_for_instance(v)
+                elif isinstance(v_type, EmbeddedDocumentField):
+                    val[k] = self.resolve_value(v, v_type)
+
+            return field_class.document_type(**val)
+        else:
+            return val
+
+
+    def value_for_instance(self, value, instance, name=None):
+        name = name or self.name
+        if value and self.field:
+            value = [self.resolve_value(v, self.field) for v in value]
+            value_for_instance = getattr(self.field, 'value_for_instance', None)
+            if value_for_instance:
+                value = [self.resolve_value(v, self.field) for v in value]
+        return BaseList(value or [], instance, name)
