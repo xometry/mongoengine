@@ -35,7 +35,7 @@ class BaseField(object):
     def __init__(self, db_field=None, name=None, required=False, default=None,
                  unique=False, unique_with=None, primary_key=False,
                  validation=None, choices=None, verbose_name=None,
-                 help_text=None, **kw):
+                 help_text=None, **kwargs):
         """
         :param db_field: The database field to store this field in
             (defaults to the name of the field)
@@ -74,7 +74,16 @@ class BaseField(object):
         self.choices = choices
         self.verbose_name = verbose_name
         self.help_text = help_text
-        self.__dict__.update(kw)
+
+        # Detect and report conflicts between metadata and base properties.
+        conflicts = set(dir(self)) & set(kwargs)
+        if conflicts:
+            raise TypeError("%s already has attribute(s): %s" % (
+                self.__class__.__name__, ', '.join(conflicts) ))
+        
+        # Assign metadata to the instance
+        # This efficient method is available because no __slots__ are defined.
+        self.__dict__.update(kwargs)
 
         # Adjust the appropriate creation counter, and save our local copy.
         if self.db_field == '_id':
