@@ -434,7 +434,7 @@ class EmbeddedDocumentField(BaseField):
     def prepare_query_value(self, op, value):
         return self.to_mongo(value)
 
-    def value_for_instance(self, value, instance):
+    def value_for_instance(self, value, instance, name=None):
         return self.resolve_value(value, self)
 
     def resolve_value(self, val, field_class):
